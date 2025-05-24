@@ -73,6 +73,12 @@ public class WndRestoreGame extends Window {
 
         // Move the game folder back to its original location
         if (FileUtils.moveDir(srcDir, destDir)) {
+            // Extract slot number from game folder name (e.g., "game1" -> 1)
+            int slot = Integer.parseInt(gameFolder.substring(4));
+
+            // Update GamesInProgress state
+            GamesInProgress.setUnknown(slot);
+
             // Refresh the game list
             ShatteredPixelDungeon.switchNoFade(TitleScene.class);
         }
