@@ -834,18 +834,55 @@ public class Dungeon {
 	
 	public static void deleteGame( int save, boolean deleteLevels ) {
 
+		// 1. 先处理关卡文件
 		if (deleteLevels) {
 			String folder = GamesInProgress.gameFolder(save);
-			for (String file : FileUtils.filesInDir(folder)){
-				if (file.contains("depth")){
-					FileUtils.deleteFile(folder + "/" + file);
+			for (String file : FileUtils.filesInDir(folder)) {
+				if (file.contains("depth")) {
+					// 移动关卡文件到DeletedGame
+					String deletedDir = "DeletedGame/" + folder;
+					if (!FileUtils.dirExists("DeletedGame")) {
+						// 创建DeletedGame目录
+						FileUtils.getFileHandle("DeletedGame").mkdirs();
+					}
+					if (!FileUtils.dirExists(deletedDir)) {
+						FileUtils.getFileHandle(deletedDir).mkdirs();
+					}
+					FileUtils.moveFile(folder + "/" + file, deletedDir + "/" + file);
 				}
 			}
 		}
 
-		FileUtils.overwriteFile(GamesInProgress.gameFile(save), 1);
-		
-		GamesInProgress.delete( save );
+		// 2. 移动主存档文件夹到DeletedGame
+		String srcDir = GamesInProgress.gameFolder(save);
+		String destDir = "DeletedGame/" + srcDir;
+		if (!FileUtils.dirExists("DeletedGame")) {
+			FileUtils.getFileHandle("DeletedGame").mkdirs();
+		}
+		if (FileUtils.dirExists(srcDir)) {
+			// 先删除已存在的目标（防止覆盖异常）
+			if (FileUtils.dirExists(destDir)) {
+				FileUtils.deleteDir(destDir);
+			}
+			FileUtils.moveDir(srcDir, destDir);
+		}
+
+		// 3. 控制DeletedGame下最多只保留5个，超出则删除最老的
+		ArrayList<String> deletedGames = FileUtils.filesInDir("DeletedGame");
+		if (deletedGames.size() > 5) {
+			// 按最后修改时间排序
+			deletedGames.sort((a, b) -> {
+				long t1 = FileUtils.getLastModified("DeletedGame/" + a);
+				long t2 = FileUtils.getLastModified("DeletedGame/" + b);
+				return Long.compare((t1), (t2));
+			});
+			for (int i = 0; i < deletedGames.size() - 5; i++) {
+				FileUtils.deleteDir("DeletedGame/" + deletedGames.get(i));
+			}
+		}
+
+		// 4. 清理GamesInProgress状态
+		GamesInProgress.delete(save);
 	}
 	
 	public static void preview( GamesInProgress.Info info, Bundle bundle ) {

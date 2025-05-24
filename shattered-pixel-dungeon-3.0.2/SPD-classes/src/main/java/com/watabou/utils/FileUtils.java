@@ -223,4 +223,34 @@ public class FileUtils {
 		output.close();
 	}
 
+	// Moves a file from src to dest. Returns true if successful.
+	public static boolean moveFile(String src, String dest) {
+		FileHandle srcFile = getFileHandle(src);
+		FileHandle destFile = getFileHandle(dest);
+		try {
+			srcFile.moveTo(destFile);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	// Moves a directory from src to dest. Returns true if successful.
+	public static boolean moveDir(String src, String dest) {
+		FileHandle srcDir = getFileHandle(src);
+		FileHandle destDir = getFileHandle(dest);
+		try {
+			srcDir.moveTo(destDir);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	// Gets the last modified time of a file or directory (in ms since epoch).
+	public static long getLastModified(String path) {
+		FileHandle file = getFileHandle(path);
+		return file.lastModified();
+	}
+
 }
