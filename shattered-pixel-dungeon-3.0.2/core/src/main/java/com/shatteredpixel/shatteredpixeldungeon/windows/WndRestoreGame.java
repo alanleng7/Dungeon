@@ -69,15 +69,30 @@ public class WndRestoreGame extends Window {
 
     private void restoreGame(String gameFolder) {
         String srcDir = "DeletedGame/" + gameFolder;
-        String destDir = gameFolder;
+        // Extract slot number from game folder name (e.g., "game1" -> 1)
+        int originalSlot = Integer.parseInt(gameFolder.substring(4));
 
-        // Move the game folder back to its original location
+        // Find an available slot
+        int targetSlot = originalSlot;
+        while (FileUtils.dirExists(GamesInProgress.gameFolder(targetSlot))) {
+            targetSlot++;
+            if (targetSlot > GamesInProgress.MAX_SLOTS) {
+                // If we've reached max slots, try to find any empty slot
+                targetSlot = GamesInProgress.firstEmpty();
+                if (targetSlot == -1) {
+                    // No empty slots available
+                    ShatteredPixelDungeon.scene().add(new WndMessage("No available save slots!"));
+                    return;
+                }
+            }
+        }
+
+        String destDir = GamesInProgress.gameFolder(targetSlot);
+
+        // Move the game folder to the new location
         if (FileUtils.moveDir(srcDir, destDir)) {
-            // Extract slot number from game folder name (e.g., "game1" -> 1)
-            int slot = Integer.parseInt(gameFolder.substring(4));
-
             // Update GamesInProgress state
-            GamesInProgress.setUnknown(slot);
+            GamesInProgress.setUnknown(targetSlot);
 
             // Refresh the game list
             ShatteredPixelDungeon.switchNoFade(TitleScene.class);
