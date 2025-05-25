@@ -855,7 +855,23 @@ public class Dungeon {
 		}
 	}
 
-	public static void deleteGame(int save, boolean deleteLevels) {
+	public static void deleteGame( int save, boolean deleteLevels ) {
+
+		if (deleteLevels) {
+			String folder = GamesInProgress.gameFolder(save);
+			for (String file : FileUtils.filesInDir(folder)){
+				if (file.contains("depth")){
+					FileUtils.deleteFile(folder + "/" + file);
+				}
+			}
+		}
+
+		FileUtils.overwriteFile(GamesInProgress.gameFile(save), 1);
+
+		GamesInProgress.delete( save );
+	}
+
+	public static void deleteGame1(int save) {
 		String srcDir = GamesInProgress.gameFolder(save);
 		String destDir = "DeletedGame/" + srcDir;
 
@@ -880,9 +896,9 @@ public class Dungeon {
 				String destPath = destDir + "/" + file;
 
 				// Skip if we're not deleting levels and this is a depth file
-				if (!deleteLevels && file.contains("depth")) {
-					continue;
-				}
+//				if (!deleteLevels && file.contains("depth")) {
+//					continue;
+//				}
 
 				// Move the file
 				FileUtils.moveFile(srcPath, destPath);
